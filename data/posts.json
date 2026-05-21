@@ -1,0 +1,47 @@
+[
+  {
+    "id": "31bac77d-561a-4a4e-83e6-c934a4e942fa",
+    "title": "한화 야구로 힐링 ㅎㅎ",
+    "category": "운동",
+    "url": "https://www.youtube.com/watch?v=_NAqs8ZDYC8",
+    "author": "예승",
+    "clientId": "anon-1778156883228-62302c0fbaee08",
+    "createdAt": "2026-05-07T14:13:32.435Z"
+  },
+  {
+    "id": "public-1",
+    "title": "퇴근 후 같이 보는 따뜻한 집밥 영상",
+    "category": "먹방",
+    "url": "https://www.youtube.com/watch?v=ysz5S6PUM-U",
+    "author": "익명 밥친구",
+    "clientId": "community",
+    "createdAt": "2026-05-01T10:00:00.000Z"
+  },
+  {
+    "id": "public-2",
+    "title": "새벽에 틀어두기 좋은 공부 라이브",
+    "category": "공부",
+    "url": "https://www.youtube.com/watch?v=jfKfPfyJRdk",
+    "author": "익명 책상",
+    "clientId": "community",
+    "createdAt": "2026-05-01T11:00:00.000Z"
+  },
+  {
+    "id": "public-3",
+    "title": "원룸에서도 할 수 있는 가벼운 스트레칭",
+    "category": "운동",
+    "url": "https://www.youtube.com/watch?v=g_tea8ZNk5A",
+    "author": "익명 루틴러",
+    "clientId": "community",
+    "createdAt": "2026-05-01T12:00:00.000Z"
+  },
+  {
+    "id": "public-4",
+    "title": "혼자 보내는 주말 브이로그",
+    "category": "일상",
+    "url": "https://www.instagram.com/reel/Cxexample/",
+    "author": "익명 창가",
+    "clientId": "community",
+    "createdAt": "2026-05-01T13:00:00.000Z"
+  }
+]

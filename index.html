@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모여봐투게더</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="rail" aria-label="주요 메뉴">
+        <div class="brand-mark" aria-label="모여봐투게더">모</div>
+        <button class="rail-button active" data-view="board" type="button" aria-label="보드">
+          <span class="icon-grid"></span>
+        </button>
+        <button class="rail-button" data-view="bookmarks" type="button" aria-label="북마크">
+          <span class="icon-bookmark"></span>
+        </button>
+        <button class="rail-button" data-view="profile" type="button" aria-label="익명 프로필">
+          <span class="icon-user"></span>
+        </button>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow top-eyebrow" id="viewEyebrow">모여봐투게더</p>
+            <h1 class="brand-title">모여봐투게더</h1>
+            <p class="view-subtitle" id="viewTitle">자신의 일상을 간단히 공유해보세요!</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-button" id="profileButton" type="button">익명 프로필</button>
+            <button class="primary-button" id="storageButton" type="button">가입 없이 참여</button>
+          </div>
+        </header>
+
+        <section class="composer" aria-labelledby="composer-title">
+          <div class="composer-copy">
+            <h2 id="composer-title">영상/사진 공유</h2>
+            <p>닉네임만 정하고 링크를 붙여넣거나 사진/영상을 업로드해보세요. 가입 없이 모두가 보는 공유 보드에 참여하는 흐름입니다.</p>
+          </div>
+          <form id="postForm" class="composer-form">
+            <label>
+              <span>영상 링크</span>
+              <input id="linkInput" type="url" placeholder="https://youtube.com/watch?v=..." />
+            </label>
+            <label>
+              <span>사진/영상 파일</span>
+              <input id="fileInput" type="file" accept="image/*,video/*" />
+            </label>
+            <label>
+              <span>제목</span>
+              <input id="titleInput" type="text" placeholder="예: 퇴근 후 김치찌개 먹방" maxlength="64" required />
+            </label>
+            <label>
+              <span>카테고리</span>
+              <select id="categoryInput">
+                <option>일상</option>
+                <option>먹방</option>
+                <option>공부</option>
+                <option>운동</option>
+                <option>취미</option>
+              </select>
+            </label>
+            <button class="primary-button" type="submit">게시</button>
+          </form>
+        </section>
+
+        <section class="filters" aria-label="카테고리 필터">
+          <button class="filter-chip active" data-category="전체" type="button">전체</button>
+          <button class="filter-chip" data-category="일상" type="button">일상</button>
+          <button class="filter-chip" data-category="먹방" type="button">먹방</button>
+          <button class="filter-chip" data-category="공부" type="button">공부</button>
+          <button class="filter-chip" data-category="운동" type="button">운동</button>
+          <button class="filter-chip" data-category="취미" type="button">취미</button>
+        </section>
+
+        <section class="profile-view" id="profileView" hidden>
+          <div class="profile-summary">
+            <div class="avatar" id="profileAvatar">혼</div>
+            <div>
+              <p class="eyebrow">익명 프로필</p>
+              <h2 id="profileName">혼자사는친구</h2>
+              <p id="profileInterests">관심사를 설정해보세요.</p>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span id="postCount">0</span>
+              <p>내가 올린 게시물</p>
+            </div>
+            <div class="stat-card">
+              <span id="bookmarkCount">0</span>
+              <p>북마크</p>
+            </div>
+            <div class="stat-card">
+              <span>공개 익명</span>
+              <p>회원가입 없음</p>
+            </div>
+          </div>
+          <button class="primary-button" id="editProfileButton" type="button">프로필 수정</button>
+        </section>
+
+        <section class="board" id="board" aria-live="polite"></section>
+      </main>
+
+      <aside class="chat-panel" id="chatPanel" aria-label="AI 친구 채팅">
+        <div class="chat-header">
+          <div>
+            <p class="eyebrow">AI 친구</p>
+            <h2>소담</h2>
+          </div>
+          <button class="icon-button mobile-only" id="closeChatButton" type="button" aria-label="채팅 닫기">
+            <span class="icon-close"></span>
+          </button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="message bot">안녕하세요, 저는 소담이에요. 오늘 있었던 일이나 같이 보고 싶은 영상 이야기를 편하게 들려주세요.</div>
+        </div>
+        <form class="chat-form" id="chatForm">
+          <input id="chatInput" type="text" placeholder="메시지를 입력하세요" autocomplete="off" />
+          <button class="primary-button" type="submit">전송</button>
+        </form>
+      </aside>
+
+      <button class="chat-fab" id="openChatButton" type="button" aria-label="AI 채팅 열기">
+        <span class="icon-chat"></span>
+      </button>
+    </div>
+
+    <dialog class="modal" id="accountModal">
+      <form method="dialog" class="modal-card">
+        <button class="icon-button modal-close" value="cancel" type="submit" aria-label="닫기">
+          <span class="icon-close"></span>
+        </button>
+        <p class="eyebrow">가입 없는 익명 설정</p>
+        <h2>익명 프로필</h2>
+        <label>
+          <span>닉네임</span>
+          <input id="nicknameInput" type="text" value="혼자사는친구" maxlength="18" />
+        </label>
+        <label>
+          <span>관심사</span>
+          <input id="interestInput" type="text" value="먹방, 공부, 산책" maxlength="60" />
+        </label>
+        <p class="modal-note">닉네임은 현재 브라우저에 저장되고, 게시물은 로컬 서버의 익명 공개 보드에 저장됩니다.</p>
+        <menu>
+          <button class="ghost-button" value="cancel" type="submit">취소</button>
+          <button class="primary-button" id="saveProfileButton" value="default" type="submit">저장</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

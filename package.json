@@ -1,0 +1,12 @@
+{
+  "name": "moyobwa-together",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Anonymous social video board prototype with a local Node API and GPT chat endpoint.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
