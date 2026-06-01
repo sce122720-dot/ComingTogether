@@ -172,10 +172,17 @@ function getPreview(post) {
   }
 
   if (post.fileUrl && post.fileType?.startsWith("video/")) {
+    const isQuickTime = post.fileType === "video/quicktime" || post.fileName?.toLowerCase().endsWith(".mov");
     return `
-      <video class="post-video" controls preload="metadata">
-        <source src="${escapeHtml(post.fileUrl)}" type="${escapeHtml(post.fileType)}" />
-      </video>
+      <div class="video-frame ${isQuickTime ? "video-error" : ""}">
+        <video class="post-video" controls playsinline preload="metadata">
+          <source src="${escapeHtml(post.fileUrl)}"${isQuickTime ? "" : ` type="${escapeHtml(post.fileType)}"`} />
+        </video>
+        <div class="video-fallback-note">
+          ${isQuickTime ? "MOV 파일은 일부 브라우저에서 바로 재생되지 않을 수 있어요." : "영상이 재생되지 않으면 새 탭에서 열어보세요."}
+          <a href="${escapeHtml(post.fileUrl)}" target="_blank" rel="noopener noreferrer">파일 열기</a>
+        </div>
+      </div>
     `;
   }
 
@@ -557,6 +564,16 @@ board.addEventListener("click", async (event) => {
   renderProfile();
   renderPosts();
 });
+
+board.addEventListener(
+  "error",
+  (event) => {
+    const video = event.target.closest?.(".post-video");
+    if (!video) return;
+    video.closest(".video-frame")?.classList.add("video-error");
+  },
+  true,
+);
 
 railButtons.forEach((button) => {
   button.addEventListener("click", () => setView(button.dataset.view));

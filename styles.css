@@ -278,12 +278,40 @@ select:focus {
 }
 
 .post-card img,
-.preview-fallback,
-.post-video {
+.preview-fallback {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+}
+
+.video-frame {
+  background: #111;
+}
+
+.post-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #111;
+}
+
+.video-fallback-note {
+  display: none;
+  padding: 10px 12px;
+  background: #fff6eb;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.video-frame.video-error .video-fallback-note {
+  display: block;
+}
+
+.video-fallback-note a {
+  color: var(--rose);
+  font-weight: 900;
 }
 
 .post-video {
