@@ -7,6 +7,7 @@ const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, "data");
 const UPLOAD_DIR = path.join(ROOT, "uploads");
 const POSTS_FILE = path.join(DATA_DIR, "posts.json");
+const COMMENTS_FILE = path.join(DATA_DIR, "comments.json");
 const PORT = Number(process.env.PORT || 3000);
 const CATEGORIES = new Set(["일상", "먹방", "공부", "운동", "취미"]);
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
@@ -74,6 +75,17 @@ const server = http.createServer(async (req, res) => {
       await deletePost(id, post);
       const nextPosts = await getPosts();
       return sendJson(res, 200, { posts: nextPosts });
+    }
+
+    if (url.pathname.match(/^\/api\/posts\/[^/]+\/comments$/) && req.method === "POST") {
+      const id = decodeURIComponent(url.pathname.split("/")[3]);
+      const body = await readJson(req);
+      const posts = await getPosts();
+      const post = posts.find((item) => item.id === id);
+      if (!post) return sendJson(res, 404, { error: "댓글을 달 게시물을 찾지 못했어요." });
+
+      await saveComment(createComment(id, body));
+      return sendJson(res, 201, { posts: await getPosts() });
     }
 
     if (url.pathname === "/api/chat" && req.method === "POST") {
@@ -162,6 +174,10 @@ function ensureDataFile() {
       },
     ]);
   }
+
+  if (!fs.existsSync(COMMENTS_FILE)) {
+    writeComments([]);
+  }
 }
 
 function readPosts() {
@@ -178,13 +194,36 @@ function writePosts(posts) {
   fs.writeFileSync(POSTS_FILE, `${JSON.stringify(posts, null, 2)}\n`, "utf8");
 }
 
-async function getPosts() {
-  if (!USE_SUPABASE) return readPosts();
+function readComments() {
+  try {
+    const raw = fs.readFileSync(COMMENTS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
-  const rows = await supabaseRequest("/rest/v1/posts?select=*&order=created_at.desc", {
-    method: "GET",
-  });
-  return rows.map(rowToPost);
+function writeComments(comments) {
+  fs.writeFileSync(COMMENTS_FILE, `${JSON.stringify(comments, null, 2)}\n`, "utf8");
+}
+
+async function getPosts() {
+  if (!USE_SUPABASE) return attachComments(readPosts(), readComments());
+
+  try {
+    const rows = await supabaseRequest("/rest/v1/posts?select=*&order=created_at.desc", {
+      method: "GET",
+    });
+    const comments = await getComments().catch((error) => {
+      console.warn("comments unavailable:", error.message);
+      return [];
+    });
+    return attachComments(rows.map(rowToPost), comments);
+  } catch (error) {
+    console.warn("supabase posts unavailable, using local fallback:", error.message);
+    return attachComments(readPosts(), readComments());
+  }
 }
 
 async function savePost(post) {
@@ -193,19 +232,29 @@ async function savePost(post) {
     return;
   }
 
-  await supabaseRequest("/rest/v1/posts", {
-    method: "POST",
-    headers: { Prefer: "return=minimal" },
-    body: JSON.stringify(postToRow(post)),
-  });
+  try {
+    await supabaseRequest("/rest/v1/posts", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify(postToRow(post)),
+    });
+  } catch (error) {
+    console.warn("supabase save unavailable, using local fallback:", error.message);
+    writePosts([post, ...readPosts()]);
+  }
 }
 
 async function deletePost(id, post) {
   if (!USE_SUPABASE) {
     writePosts(readPosts().filter((item) => item.id !== id));
+    writeComments(readComments().filter((item) => item.postId !== id));
     deleteLocalUpload(post);
     return;
   }
+
+  await supabaseRequest(`/rest/v1/comments?post_id=eq.${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  }).catch(() => {});
 
   await supabaseRequest(`/rest/v1/posts?id=eq.${encodeURIComponent(id)}`, {
     method: "DELETE",
@@ -216,6 +265,97 @@ async function deletePost(id, post) {
       method: "DELETE",
     }).catch(() => {});
   }
+}
+
+function attachComments(posts, comments) {
+  const commentsByPost = new Map();
+  for (const comment of comments) {
+    const list = commentsByPost.get(comment.postId) || [];
+    list.push(comment);
+    commentsByPost.set(comment.postId, list);
+  }
+
+  return posts.map((post) => ({
+    ...post,
+    comments: commentsByPost.get(post.id) || [],
+  }));
+}
+
+async function getComments() {
+  if (!USE_SUPABASE) return readComments();
+
+  const rows = await supabaseRequest("/rest/v1/comments?select=*&order=created_at.asc", {
+    method: "GET",
+  });
+  return rows.map(rowToComment);
+}
+
+async function saveComment(comment) {
+  if (!USE_SUPABASE) {
+    writeComments([...readComments(), comment]);
+    return;
+  }
+
+  await supabaseRequest("/rest/v1/comments", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify(commentToRow(comment)),
+  }).catch((error) => {
+    if (error.message === "fetch failed") {
+      console.warn("supabase comments unavailable, using local fallback:", error.message);
+      writeComments([...readComments(), comment]);
+      return;
+    }
+    if (error.status === 404) {
+      throw httpError(500, "Supabase에 comments 테이블을 먼저 만들어주세요.");
+    }
+    throw error;
+  });
+}
+
+function createComment(postId, body) {
+  const author = String(body.author || "익명 사용자").trim().slice(0, 18) || "익명 사용자";
+  const clientId = String(body.clientId || "").trim();
+  const content = String(body.content || "").trim();
+
+  if (!clientId) {
+    throw httpError(400, "익명 사용자 ID가 필요해요.");
+  }
+
+  if (!content || content.length > 220) {
+    throw httpError(400, "댓글은 1자 이상 220자 이하로 입력해주세요.");
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    postId,
+    author,
+    clientId,
+    content,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function rowToComment(row) {
+  return {
+    id: row.id,
+    postId: row.post_id,
+    author: row.author || "익명 사용자",
+    clientId: row.client_id,
+    content: row.content || "",
+    createdAt: row.created_at,
+  };
+}
+
+function commentToRow(comment) {
+  return {
+    id: comment.id,
+    post_id: comment.postId,
+    author: comment.author,
+    client_id: comment.clientId,
+    content: comment.content,
+    created_at: comment.createdAt,
+  };
 }
 
 function rowToPost(row) {
@@ -374,16 +514,29 @@ async function saveUpload(filename, fileType, content) {
   }
 
   const filePath = `posts/${storedName}`;
-  const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${filePath}`, {
-    method: "POST",
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      "Content-Type": fileType,
-      "x-upsert": "false",
-    },
-    body: content,
-  });
+  let response;
+  try {
+    response = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${filePath}`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        "Content-Type": fileType,
+        "x-upsert": "false",
+      },
+      body: content,
+    });
+  } catch (error) {
+    console.warn("supabase upload unavailable, using local fallback:", error.message);
+    const targetPath = path.join(UPLOAD_DIR, storedName);
+    fs.writeFileSync(targetPath, content);
+    return {
+      fileUrl: `/uploads/${storedName}`,
+      fileName: filename,
+      fileType,
+      filePath: storedName,
+    };
+  }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {

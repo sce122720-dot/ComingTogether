@@ -49,6 +49,19 @@ create table if not exists public.posts (
 );
 ```
 
+댓글 기능을 위해 `comments` 테이블도 만듭니다.
+
+```sql
+create table if not exists public.comments (
+  id uuid primary key,
+  post_id uuid not null references public.posts(id) on delete cascade,
+  author text not null,
+  client_id text not null,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+```
+
 Storage bucket 이름은 기본값 `uploads`입니다. 업로드 미리보기를 공개로 보여주려면 bucket을 public으로 설정하세요.
 
 ## Render 배포

@@ -265,7 +265,37 @@ function renderPosts() {
                   : `<button class="action-button muted" type="button" disabled>공개글</button>`
               }
             </div>
+            <section class="comments" aria-label="${escapeHtml(post.title)} 댓글">
+              <div class="comments-header">
+                <span>댓글</span>
+                <span>${post.comments?.length || 0}</span>
+              </div>
+              <div class="comment-list">
+                ${renderComments(post.comments || [])}
+              </div>
+              <form class="comment-form" data-post-id="${post.id}">
+                <input name="content" type="text" maxlength="220" placeholder="따뜻한 댓글 남기기" autocomplete="off" />
+                <button class="action-button" type="submit">등록</button>
+              </form>
+            </section>
           </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderComments(comments) {
+  if (!comments.length) {
+    return `<p class="comment-empty">아직 댓글이 없어요.</p>`;
+  }
+
+  return comments
+    .map(
+      (comment) => `
+        <article class="comment-item">
+          <strong>${escapeHtml(comment.author || "익명 사용자")}</strong>
+          <p>${escapeHtml(comment.content)}</p>
         </article>
       `,
     )
@@ -563,6 +593,39 @@ board.addEventListener("click", async (event) => {
 
   renderProfile();
   renderPosts();
+});
+
+board.addEventListener("submit", async (event) => {
+  const form = event.target.closest(".comment-form");
+  if (!form) return;
+
+  event.preventDefault();
+  const input = form.elements.content;
+  const content = input.value.trim();
+  if (!content) return;
+
+  const postId = form.dataset.postId;
+  const button = form.querySelector("button");
+  button.disabled = true;
+
+  try {
+    const data = await apiRequest(`/api/posts/${encodeURIComponent(postId)}/comments`, {
+      method: "POST",
+      body: JSON.stringify({
+        author: state.profile.nickname,
+        clientId: state.clientId,
+        content,
+      }),
+    });
+    posts = data.posts || posts;
+    input.value = "";
+    renderProfile();
+    renderPosts();
+  } catch (error) {
+    addMessage(`댓글 저장 중 문제가 생겼어요: ${error.message}`, "bot");
+  } finally {
+    button.disabled = false;
+  }
 });
 
 board.addEventListener(

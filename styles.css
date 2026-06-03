@@ -422,6 +422,59 @@ select:focus {
   opacity: 0.72;
 }
 
+.comments {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.comments-header {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.comment-list {
+  display: grid;
+  gap: 8px;
+}
+
+.comment-item {
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #fbfaf8;
+}
+
+.comment-item strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--mint);
+  font-size: 12px;
+}
+
+.comment-item p,
+.comment-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.comment-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.comment-form input {
+  height: 38px;
+}
+
 .empty-state,
 .profile-view {
   border: 1px solid var(--line);
